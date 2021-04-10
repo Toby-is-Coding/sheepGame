@@ -41,9 +41,9 @@ int length_RedSheep;
 
 int main()
 {
-	x_RedSheep = 70;
-	y_RedSheep = 44;
-	display();
+	x_RedSheep = 70; //DEBUG
+	y_RedSheep = 44; //DEBUG
+	display(); //DEBUG
 	return 0;
 }
 
@@ -64,9 +64,9 @@ void display()
 			else if (j == 0 || j == x_BOARD_SIZE - 1) {
 				cout << WHT << '|' << NRM; //x walls
 			}
-			/*else if (j == x_RedSheep -1 && i == y_RedSheep -1) {
+			else if (j == x_RedSheep -1 && i == y_RedSheep -1) { //DOESN'T WORK
 				cout << RED << 'O' << NRM << endl;
-			}*/
+			}
 			else {
 				cout << ' ';
 			}
