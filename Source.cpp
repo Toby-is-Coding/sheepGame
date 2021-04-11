@@ -30,7 +30,7 @@ void display();
 const int x_BOARD_SIZE = 200;
 const int y_BOARD_SIZE = 45;
 
-#define MIDDLE_OF_BOARD(forInt, halfOfSentence) for(int forInt = 0; forInt<=x_BOARD_SIZE/2-halfOfSentence; forInt++) {cout<<' ';} //copyPasteCode
+#define MIDDLE_OF_BOARD(forInt, halfOfSentence) for(int forInt = 0; forInt<=x_BOARD_SIZE/2-halfOfSentence; forInt++) {cout<<' ';} //devides board length by 2, minus length of following sentence, to get to middle of board
 
 int x_Food;
 int y_Food;
