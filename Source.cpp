@@ -6,6 +6,7 @@
 #include <thread>
 #include <conio.h>
 #include <chrono>
+#include <vector>
 //COLOUR DEFINITIONS
 #define CYN "\x1B[36m"
 #define YLW "\x1B[33m"
@@ -15,7 +16,7 @@
 #define WHT "\x1B[37m"
 #define NRM "\x1B[0m"
 //OTHER DEFINITIONS
-#define waitMilli(numOfMilliseconds) this_thread::sleep_for(chrono::milliseconds(numOfMilliseconds));
+#define waitMilli(numOfMilliseconds) this_thread::sleep_for(chrono::milliseconds(numOfMilliseconds))
 
 //HOW TO SNAKE
 //function for getting wasd input
@@ -24,54 +25,90 @@
 //settings function
 //pretty function
 
+void ClearScreen() {
+	// Function which cleans the screen without flickering
+	COORD cursorPosition;   cursorPosition.X = 0;   cursorPosition.Y = 0;   SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), cursorPosition);
+}
+
 using namespace std;
 
 void wasdInput();
 void whereIsFood();
 void display();
 
-const int x_BOARD_SIZE = 200; //200
-const int y_BOARD_SIZE = 46; //46
+const int x_BOARD_SIZE = 40; //200
+const int y_BOARD_SIZE = 40; //46
 
 bool gameOver;
 
-#define MIDDLE_OF_BOARD(forInt, halfOfSentence) for(int forInt = 0; forInt<=x_BOARD_SIZE/2-halfOfSentence; forInt++) {cout<<' ';} //devides board length by 2, minus length of following sentence, to get to middle of board
+#define MIDDLE_OF_BOARD(halfOfSentence) for(int forInt = 0; forInt<=x_BOARD_SIZE/2-halfOfSentence; forInt++) {cout<<' ';} //devides board length by 2, minus length of following sentence, to get to middle of board
 
 int x_Food;
 int y_Food;
 
 int x_RedSheep;
 int y_RedSheep;
-int length_RedSheep;
+int length_RedSheep = 3;
 
+vector<char> red_TrailDirection;
 void wasdInput()
 {
 	char buttonPressed = ' ';
 	char currentDirection = ' ';
+	char previousDirection = ' ';
 	while (!gameOver) {
 		if (_kbhit()) { //if keyboard pressed
 			buttonPressed = _getch(); //get button pressed
+			previousDirection = currentDirection; //saves last direction to limit next one
 		}
 		if (buttonPressed == 'w' || buttonPressed == 'a' || buttonPressed == 's' || buttonPressed == 'd') {
-			currentDirection = buttonPressed; //saves direction
+			currentDirection = buttonPressed; //saves input as current direction
+			if (red_TrailDirection.size() == length_RedSheep) {
+				red_TrailDirection.erase(red_TrailDirection.begin()); //if trail reached max size, erase back of trail
+			}
+			red_TrailDirection.push_back(currentDirection); //saves direction for trail
 		}
 		switch (currentDirection) {
 		case 'w':
-			y_RedSheep -= 1;
+			if (previousDirection != 's') {
+				y_RedSheep -= 1;
+			}
+			else {
+				currentDirection = previousDirection;
+				y_RedSheep += 1;
+			}
 			break;
 		case 'a':
-			x_RedSheep -= 1;
+			if (previousDirection != 'd') {
+				x_RedSheep -= 1;
+			}
+			else {
+				currentDirection = previousDirection;
+				x_RedSheep += 1;
+			}
 			break;
 		case 's':
-			y_RedSheep += 1;
+			if (previousDirection != 'w') {
+				y_RedSheep += 1;
+			}
+			else {
+				currentDirection = previousDirection;
+				y_RedSheep -= 1;
+			}
 			break;
 		case 'd':
-			x_RedSheep += 1;
+			if (previousDirection != 'a') {
+				x_RedSheep += 1;
+			}
+			else {
+				currentDirection = previousDirection;
+				x_RedSheep -= +1;
+			}
 			break;
 		default:
 			break;
 		}
-		waitMilli(300)
+		waitMilli(100);
 	}
 }
 
@@ -81,13 +118,12 @@ int main()
 
 	thread wasdInput(wasdInput);
 
-	x_RedSheep = 100;
-	y_RedSheep = 23;
+	x_RedSheep = x_BOARD_SIZE/2;
+	y_RedSheep = y_BOARD_SIZE/2;
 	whereIsFood();
 	while (!gameOver) {
 		display();
 		cout << x_RedSheep << ' ' << y_RedSheep;
-		waitMilli(300)
 	}
 	return 0;
 }
@@ -107,9 +143,12 @@ void whereIsFood()
 
 void display()
 {
-	system("cls");
+	vector<int> x_RedTrail;
+	vector<int> y_RedTrail;
+
+	ClearScreen();
 	cout << "     ";
-	MIDDLE_OF_BOARD(y, 5)
+	MIDDLE_OF_BOARD(5)
 	cout << CYN << "SHEEP GAME" << NRM << endl;
 	for (int i = 0; i < y_BOARD_SIZE; i++) { //FOR EVERY X LINE
 		cout << "     "; //aligning the board to middle of screen
@@ -124,8 +163,28 @@ void display()
 				cout << WHT << '|' << NRM; //x walls
 			}
 			else if (j == x_RedSheep && i == y_RedSheep) {
+				x_RedTrail.push_back(j); //saving x location for trail
+				y_RedTrail.push_back(i); //saving y location for trail
 				cout << RED << 'O' << NRM;
 			}
+			/*else for (int y = 0; y < length_RedSheep; y++) {
+				if (j == x_RedTrail[y] && i == y_RedTrail[y]) {
+					switch (red_TrailDirection[y]) { //prints trail based on direction
+					case 'w':
+					case 's':
+						cout << RED << '|' << NRM;
+						break;
+					case 'a':
+					case 'd':
+						cout << RED << '-' << NRM;
+						break;
+					}
+				}
+				if (x_RedTrail.size() == length_RedSheep) { //if trail reached max size, erase back of trail
+					x_RedTrail.erase(x_RedTrail.begin());
+					y_RedTrail.erase(y_RedTrail.begin());
+				}
+			}*/
 			else if (j == x_Food && i == y_Food) {
 				cout << GRN << 'B' << NRM;
 			}
