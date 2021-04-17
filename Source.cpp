@@ -32,12 +32,23 @@ void ClearScreen() {
 
 using namespace std;
 
+struct PieceOfTrail {
+	int x;
+	int y;
+	bool vertical;
+};
+vector<PieceOfTrail> RedTrail;
+
 void wasdInput();
 void whereIsFood();
 void display();
+bool isOnScreen(int x, int y);
+bool trailVertical();
 
 const int x_BOARD_SIZE = 40; //200
 const int y_BOARD_SIZE = 40; //46
+char Background[x_BOARD_SIZE][y_BOARD_SIZE];
+char Screen[x_BOARD_SIZE][y_BOARD_SIZE];
 
 bool gameOver;
 
@@ -50,7 +61,6 @@ int x_RedSheep;
 int y_RedSheep;
 int length_RedSheep = 3;
 
-vector<char> red_TrailDirection;
 void wasdInput()
 {
 	char buttonPressed = ' ';
@@ -61,13 +71,12 @@ void wasdInput()
 			buttonPressed = _getch(); //get button pressed
 			previousDirection = currentDirection; //saves last direction to limit next one
 		}
-		if (buttonPressed == 'w' || buttonPressed == 'a' || buttonPressed == 's' || buttonPressed == 'd') {
-			currentDirection = buttonPressed; //saves input as current direction
-			if (red_TrailDirection.size() == length_RedSheep) {
-				red_TrailDirection.erase(red_TrailDirection.begin()); //if trail reached max size, erase back of trail
-			}
-			red_TrailDirection.push_back(currentDirection); //saves direction for trail
-		}
+		currentDirection = buttonPressed; //saves input as current direction
+
+		//PieceOfTrail* newPiece = &*RedTrail.begin(); //makes pointer to newest piece of RedTrail
+		//newPiece->x = x_RedSheep;
+		//newPiece->y = y_RedSheep;
+
 		switch (currentDirection) {
 		case 'w':
 			if (previousDirection != 's') {
@@ -77,6 +86,7 @@ void wasdInput()
 				currentDirection = previousDirection;
 				y_RedSheep += 1;
 			}
+			//newPiece->vertical = true;
 			break;
 		case 'a':
 			if (previousDirection != 'd') {
@@ -86,6 +96,7 @@ void wasdInput()
 				currentDirection = previousDirection;
 				x_RedSheep += 1;
 			}
+			//newPiece->vertical = false;
 			break;
 		case 's':
 			if (previousDirection != 'w') {
@@ -95,6 +106,7 @@ void wasdInput()
 				currentDirection = previousDirection;
 				y_RedSheep -= 1;
 			}
+			//newPiece->vertical = true;
 			break;
 		case 'd':
 			if (previousDirection != 'a') {
@@ -104,6 +116,7 @@ void wasdInput()
 				currentDirection = previousDirection;
 				x_RedSheep -= +1;
 			}
+			//newPiece->vertical = false;
 			break;
 		default:
 			break;
@@ -116,7 +129,22 @@ int main()
 {
 	srand(time(NULL)); //gets the time at the time of use to configure rand function
 
-	thread wasdInput(wasdInput);
+	thread wasdInput(wasdInput); //begins thread for wasdInput
+
+	//create background
+	for (int i = 0; i < y_BOARD_SIZE; i++) {
+		for (int j = 0; j < x_BOARD_SIZE; j++) {
+			Background[j][i] = ' '; //default background character
+
+			if ((j == 0 && i == 0) || (j == x_BOARD_SIZE - 1 && i == 0)) {
+				Background[j][i] = ' '; //changes top corners to spacebar
+			}
+			else if (j == 0 || j == x_BOARD_SIZE - 1)
+				Background[j][i] = '|'; //vertical walls
+			else if (i == 0 || i == y_BOARD_SIZE - 1)
+				Background[j][i] = '_'; //horizontal walls
+		}
+	}
 
 	x_RedSheep = x_BOARD_SIZE/2;
 	y_RedSheep = y_BOARD_SIZE/2;
@@ -143,7 +171,32 @@ void whereIsFood()
 
 void display()
 {
-	vector<int> x_RedTrail;
+	memcpy(&Screen, &Background, sizeof(Screen)); //clears entities
+
+	ClearScreen();
+	cout << "     ";
+	MIDDLE_OF_BOARD(5)
+		cout << CYN << "SHEEP GAME" << NRM << endl;
+
+	if (isOnScreen(x_RedSheep, y_RedSheep))
+		Screen[x_RedSheep][y_RedSheep] = 'O'; //draw sheep if on screen
+	Screen[x_Food][y_Food] = 'B'; //draw food yum yum
+
+	for (int i = 0; i < y_BOARD_SIZE; i++) {
+		cout << "     ";
+		for (int j = 0; j < x_BOARD_SIZE; j++) {
+			char currentCharacter = Screen[j][i];
+			if (currentCharacter == 'O') //red sheep
+				cout << RED << currentCharacter << NRM;
+			else if (currentCharacter == 'B') //green food
+				cout << GRN << currentCharacter << NRM;
+			else //white walls
+				cout << currentCharacter;
+		}
+		cout << endl;
+	}
+
+	/*vector<int> x_RedTrail;
 	vector<int> y_RedTrail;
 
 	ClearScreen();
@@ -167,7 +220,7 @@ void display()
 				y_RedTrail.push_back(i); //saving y location for trail
 				cout << RED << 'O' << NRM;
 			}
-			/*else for (int y = 0; y < length_RedSheep; y++) {
+			else for (int y = 0; y < length_RedSheep; y++) {
 				if (j == x_RedTrail[y] && i == y_RedTrail[y]) {
 					switch (red_TrailDirection[y]) { //prints trail based on direction
 					case 'w':
@@ -184,7 +237,7 @@ void display()
 					x_RedTrail.erase(x_RedTrail.begin());
 					y_RedTrail.erase(y_RedTrail.begin());
 				}
-			}*/
+			}
 			else if (j == x_Food && i == y_Food) {
 				cout << GRN << 'B' << NRM;
 			}
@@ -193,5 +246,17 @@ void display()
 			}
 		}
 		cout << endl;
-	}
+	}*/
+}
+
+bool isOnScreen(int x, int y)
+{
+	if (x < 0 || x > x_BOARD_SIZE - 1 || y < 0 || y > y_BOARD_SIZE - 1)
+		return false;
+	return true;
+}
+
+bool trailVertical()
+{
+	return true;
 }
